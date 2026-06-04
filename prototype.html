@@ -1,0 +1,605 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Трекер — прототип</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@2.44.0/tabler-icons.min.css">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#080b12;
+  --s1:#0e1120;--s2:#131726;--s3:#181d2e;--s4:#1e2438;
+  --border:#232b42;--border2:#2c3550;
+  --blue:#4d8df6;--blue2:#3a7ae8;--blue-dim:#0d1d3a;
+  --green:#18c17a;--green-dim:#071f14;
+  --red:#e5484d;--red-dim:#200d0d;
+  --amber:#f0a030;--amber-dim:#1e1200;
+  --purple:#9580ff;--purple-dim:#130f2a;
+  --cyan:#22d3ee;--cyan-dim:#051518;
+  --text:#eef0f8;--text2:#9aa0bc;--text3:#505878;
+  --shadow:0 20px 60px rgba(0,0,0,.7);
+  --r:11px;
+}
+html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Segoe UI',system-ui,sans-serif;font-size:14px}
+::-webkit-scrollbar{width:4px;height:4px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--border2);border-radius:4px}
+
+/* ── shell ───────────────────────────────────────── */
+.shell{display:grid;grid-template-columns:220px 1fr;grid-template-rows:100vh;height:100vh;overflow:hidden}
+
+/* ── sidebar ─────────────────────────────────────── */
+.sidebar{background:var(--s1);border-right:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden}
+.brand{padding:20px 18px 16px;display:flex;align-items:center;gap:10px;border-bottom:1px solid var(--border)}
+.brand-icon{width:32px;height:32px;background:var(--blue);border-radius:9px;display:flex;align-items:center;justify-content:center;color:#fff;font-size:16px;flex-shrink:0}
+.brand-name{font-size:15px;font-weight:700;letter-spacing:-.3px}
+.brand-sub{font-size:10px;color:var(--text3);margin-top:1px}
+
+.sidebar-section{padding:14px 12px 6px;font-size:10px;font-weight:700;letter-spacing:.8px;color:var(--text3);text-transform:uppercase}
+.nav-item{display:flex;align-items:center;gap:9px;padding:8px 12px;border-radius:8px;cursor:pointer;margin:1px 6px;color:var(--text2);font-size:13px;transition:background .14s,color .14s;user-select:none}
+.nav-item i{font-size:16px;width:20px;text-align:center;flex-shrink:0}
+.nav-item:hover{background:var(--s3);color:var(--text)}
+.nav-item.active{background:var(--blue-dim);color:var(--blue)}
+.nav-item .badge{margin-left:auto;background:var(--blue);color:#fff;font-size:10px;font-weight:700;padding:1px 6px;border-radius:10px;min-width:18px;text-align:center}
+.nav-item .badge.red{background:var(--red)}
+.nav-item .badge.amber{background:var(--amber);color:#000}
+
+.sidebar-bottom{margin-top:auto;padding:12px 8px;border-top:1px solid var(--border)}
+.user-row{display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:9px;cursor:pointer;transition:background .14s}
+.user-row:hover{background:var(--s3)}
+.avatar{width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,#4d8df6,#9580ff);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:#fff;flex-shrink:0}
+.user-name{font-size:13px;font-weight:500}
+.user-role{font-size:11px;color:var(--text3)}
+
+/* ── main ────────────────────────────────────────── */
+.main{display:flex;flex-direction:column;overflow:hidden;background:var(--bg)}
+
+/* topbar */
+.topbar{display:flex;align-items:center;gap:12px;padding:14px 20px;border-bottom:1px solid var(--border);background:var(--s1);flex-shrink:0}
+.page-title{font-size:16px;font-weight:700;letter-spacing:-.3px;flex:1}
+.topbar-actions{display:flex;gap:8px;align-items:center}
+.clock-chip{font-size:12px;color:var(--text2);font-variant-numeric:tabular-nums;background:var(--s3);border:1px solid var(--border);border-radius:7px;padding:4px 10px}
+.btn{display:inline-flex;align-items:center;gap:6px;padding:7px 14px;border-radius:9px;font-size:12px;font-weight:600;cursor:pointer;border:1px solid var(--border);background:transparent;color:var(--text);font-family:inherit;transition:all .15s;white-space:nowrap}
+.btn:hover{background:var(--s3);border-color:var(--border2)}
+.btn:active{transform:scale(.97)}
+.btn-primary{background:var(--blue);border-color:var(--blue);color:#fff}
+.btn-primary:hover{background:var(--blue2);border-color:var(--blue2)}
+.search-box{display:flex;align-items:center;gap:7px;background:var(--s2);border:1px solid var(--border);border-radius:9px;padding:6px 12px;min-width:200px}
+.search-box i{color:var(--text3);font-size:15px}
+.search-box input{background:none;border:none;outline:none;color:var(--text);font-size:13px;font-family:inherit;width:100%;min-width:0}
+.search-box input::placeholder{color:var(--text3)}
+
+/* content */
+.content{flex:1;overflow-y:auto;padding:20px}
+
+/* ── kpi row ─────────────────────────────────────── */
+.kpi-row{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px}
+.kpi{background:var(--s2);border:1px solid var(--border);border-radius:var(--r);padding:14px 16px;position:relative;overflow:hidden;transition:border-color .2s}
+.kpi::before{content:'';position:absolute;top:0;left:0;right:0;height:2px}
+.kpi.blue::before{background:var(--blue)}
+.kpi.green::before{background:var(--green)}
+.kpi.amber::before{background:var(--amber)}
+.kpi.red::before{background:var(--red)}
+.kpi:hover{border-color:var(--border2)}
+.kpi-label{font-size:11px;color:var(--text2);font-weight:600;letter-spacing:.3px;text-transform:uppercase;margin-bottom:6px}
+.kpi-val{font-size:26px;font-weight:700;letter-spacing:-.5px;line-height:1}
+.kpi-val.blue{color:var(--blue)}.kpi-val.green{color:var(--green)}.kpi-val.amber{color:var(--amber)}.kpi-val.red{color:var(--red)}
+.kpi-sub{font-size:11px;color:var(--text3);margin-top:5px;display:flex;align-items:center;gap:4px}
+.kpi-trend{font-size:10px;font-weight:700;padding:2px 6px;border-radius:5px}
+.kpi-trend.up{background:var(--green-dim);color:var(--green)}
+.kpi-trend.dn{background:var(--red-dim);color:var(--red)}
+
+/* ── two-col ─────────────────────────────────────── */
+.two-col{display:grid;grid-template-columns:1fr 340px;gap:14px;align-items:start}
+
+/* ── card ────────────────────────────────────────── */
+.card{background:var(--s2);border:1px solid var(--border);border-radius:var(--r)}
+.card-head{display:flex;align-items:center;justify-content:space-between;padding:14px 16px;border-bottom:1px solid var(--border)}
+.card-title{font-size:13px;font-weight:700;display:flex;align-items:center;gap:7px}
+.card-title i{font-size:16px;color:var(--blue)}
+.card-actions{display:flex;gap:6px}
+.link-btn{background:none;border:none;color:var(--text3);font-size:12px;cursor:pointer;padding:3px 6px;border-radius:6px;font-family:inherit;transition:color .14s,background .14s}
+.link-btn:hover{color:var(--text);background:var(--s4)}
+
+/* ── timeline ────────────────────────────────────── */
+.timeline{padding:6px 16px 14px;position:relative}
+.tl-slot{display:flex;gap:14px;min-height:44px;position:relative}
+.tl-slot+.tl-slot{border-top:1px solid var(--border)}
+.tl-time{width:42px;flex-shrink:0;font-size:11px;font-variant-numeric:tabular-nums;color:var(--text3);padding-top:12px;text-align:right}
+.tl-time.hour{color:var(--text2);font-weight:600}
+.tl-line{width:1px;background:var(--border);position:relative;flex-shrink:0}
+.tl-dot{position:absolute;top:14px;left:-4px;width:8px;height:8px;border-radius:50%;background:var(--border2);border:2px solid var(--bg)}
+.tl-slot.now .tl-dot{background:var(--blue);border-color:var(--bg);box-shadow:0 0 0 3px rgba(77,141,246,.25)}
+.tl-slot.now .tl-line::after{content:'';position:absolute;top:18px;left:-1px;right:-1px;height:1.5px;background:var(--blue);box-shadow:0 0 6px rgba(77,141,246,.5)}
+.tl-body{flex:1;padding:8px 0 8px}
+
+.task{background:var(--s3);border:1px solid var(--border);border-radius:9px;padding:8px 11px;margin-bottom:4px;display:flex;align-items:center;gap:9px;cursor:pointer;transition:border-color .14s,background .14s}
+.task:hover{border-color:var(--border2);background:var(--s4)}
+.task.done{opacity:.4}
+.task-stripe{width:3px;height:32px;border-radius:2px;flex-shrink:0}
+.task-stripe.blue{background:var(--blue)}
+.task-stripe.purple{background:var(--purple)}
+.task-stripe.amber{background:var(--amber)}
+.task-stripe.red{background:var(--red)}
+.task-stripe.green{background:var(--green)}
+.chk{width:16px;height:16px;border-radius:5px;border:1.5px solid var(--border2);background:var(--s1);flex-shrink:0;display:flex;align-items:center;justify-content:center;transition:all .15s;cursor:pointer}
+.chk.checked{background:var(--blue);border-color:var(--blue)}
+.chk.checked::after{content:'';display:block;width:8px;height:4px;border-left:2px solid #fff;border-bottom:2px solid #fff;transform:rotate(-45deg) translate(0px,-1px)}
+.task-name{flex:1;font-size:13px;font-weight:500;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.task-name.done{text-decoration:line-through;color:var(--text3)}
+.task-chip{font-size:10px;font-weight:700;padding:2px 8px;border-radius:10px;white-space:nowrap;letter-spacing:.2px}
+.chip-blue  {background:var(--blue-dim);  color:var(--blue);  border:1px solid #1a3566}
+.chip-purple{background:var(--purple-dim);color:var(--purple);border:1px solid #2a2050}
+.chip-amber {background:var(--amber-dim); color:var(--amber); border:1px solid #3d2800}
+.chip-red   {background:var(--red-dim);   color:var(--red);   border:1px solid #450e0e}
+.chip-green {background:var(--green-dim); color:var(--green); border:1px solid #0b3d24}
+.task-time{font-size:11px;color:var(--text3);white-space:nowrap}
+
+/* now marker */
+.now-bar{display:flex;align-items:center;gap:8px;margin:6px 0;position:relative;z-index:2}
+.now-bar-line{flex:1;height:1.5px;background:linear-gradient(90deg,var(--blue),transparent)}
+.now-bar-label{font-size:11px;color:var(--blue);font-weight:700;white-space:nowrap;background:var(--s2);padding:0 6px}
+
+/* ── right panel ─────────────────────────────────── */
+.right-col{display:flex;flex-direction:column;gap:14px}
+
+/* mini calendar */
+.mini-cal{padding:14px 16px}
+.cal-nav{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+.cal-month{font-size:13px;font-weight:700}
+.cal-arr{background:none;border:1px solid var(--border);color:var(--text2);border-radius:7px;width:26px;height:26px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:13px;transition:all .14s}
+.cal-arr:hover{background:var(--s3);color:var(--text)}
+.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:2px}
+.cal-dow{text-align:center;font-size:10px;font-weight:700;color:var(--text3);padding:3px 0}
+.cal-day{text-align:center;font-size:12px;border-radius:7px;padding:5px 2px;cursor:pointer;transition:background .12s,color .12s;position:relative}
+.cal-day:hover{background:var(--s3)}
+.cal-day.today{background:var(--blue);color:#fff;font-weight:700}
+.cal-day.sel:not(.today){background:var(--blue-dim);color:var(--blue);font-weight:600}
+.cal-day.other{color:var(--text3)}
+.cal-day.has-dot::after{content:'';position:absolute;bottom:2px;left:50%;transform:translateX(-50%);width:4px;height:4px;border-radius:50%;background:var(--blue)}
+.cal-day.today.has-dot::after{background:#fff}
+
+/* upcoming */
+.upcoming-list{padding:8px 0 12px}
+.upcoming-item{display:flex;gap:12px;align-items:flex-start;padding:9px 16px;cursor:pointer;transition:background .14s}
+.upcoming-item:hover{background:var(--s3)}
+.upcoming-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;margin-top:5px}
+.upcoming-text{flex:1;min-width:0}
+.upcoming-name{font-size:13px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.upcoming-meta{font-size:11px;color:var(--text3);margin-top:2px}
+.upcoming-time{font-size:11px;color:var(--text2);white-space:nowrap;font-variant-numeric:tabular-nums}
+
+/* progress ring */
+.prog-ring-wrap{display:flex;align-items:center;gap:14px;padding:4px 16px 14px}
+.prog-ring{position:relative;width:64px;height:64px;flex-shrink:0}
+.prog-ring svg{transform:rotate(-90deg)}
+.prog-ring-center{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:var(--blue)}
+.prog-ring-info{flex:1}
+.prog-ring-label{font-size:12px;color:var(--text2);margin-bottom:6px}
+.mini-bars{display:flex;flex-direction:column;gap:5px}
+.mini-bar-row{display:flex;align-items:center;gap:8px}
+.mini-bar-name{font-size:11px;color:var(--text3);width:72px;flex-shrink:0}
+.mini-bar-track{flex:1;height:4px;background:var(--s4);border-radius:2px;overflow:hidden}
+.mini-bar-fill{height:100%;border-radius:2px}
+.mini-bar-val{font-size:11px;color:var(--text2);width:28px;text-align:right}
+
+/* tag row */
+.tag-row{display:flex;flex-wrap:wrap;gap:6px;padding:0 16px 14px}
+.tag{font-size:11px;font-weight:600;padding:4px 10px;border-radius:20px;cursor:pointer;border:1px solid transparent;transition:all .14s}
+.tag:hover{opacity:.85}
+
+/* empty state */
+.empty{text-align:center;padding:28px 16px;color:var(--text3)}
+.empty i{font-size:32px;margin-bottom:8px;display:block;opacity:.4}
+.empty p{font-size:12px}
+</style>
+</head>
+<body>
+<div class="shell">
+
+<!-- ── SIDEBAR ──────────────────────────────────────── -->
+<aside class="sidebar">
+  <div class="brand">
+    <div class="brand-icon"><i class="ti ti-layout-kanban"></i></div>
+    <div>
+      <div class="brand-name">DayTracker</div>
+      <div class="brand-sub">Планировщик задач</div>
+    </div>
+  </div>
+
+  <div class="sidebar-section">Главное</div>
+  <div class="nav-item active"><i class="ti ti-calendar-event"></i> Сегодня <span class="badge">7</span></div>
+  <div class="nav-item"><i class="ti ti-layout-list"></i> Все задачи</div>
+  <div class="nav-item"><i class="ti ti-clock-play"></i> В работе <span class="badge amber">3</span></div>
+  <div class="nav-item"><i class="ti ti-alert-circle"></i> Срочные <span class="badge red">2</span></div>
+
+  <div class="sidebar-section">Категории</div>
+  <div class="nav-item"><i class="ti ti-settings" style="color:#4d8df6"></i> Операционные</div>
+  <div class="nav-item"><i class="ti ti-users" style="color:#9580ff"></i> Встречи</div>
+  <div class="nav-item"><i class="ti ti-file-analytics" style="color:#f0a030"></i> Отчётность</div>
+  <div class="nav-item"><i class="ti ti-bolt" style="color:#e5484d"></i> Срочные</div>
+
+  <div class="sidebar-section">Проекты</div>
+  <div class="nav-item"><i class="ti ti-building-warehouse" style="color:#22d3ee"></i> Склад А</div>
+  <div class="nav-item"><i class="ti ti-chart-bar" style="color:#18c17a"></i> KPI Q2</div>
+
+  <div class="sidebar-bottom">
+    <div class="user-row">
+      <div class="avatar">АМ</div>
+      <div>
+        <div class="user-name">Алексей М.</div>
+        <div class="user-role">Руководитель</div>
+      </div>
+      <i class="ti ti-settings" style="color:var(--text3);margin-left:auto;font-size:15px"></i>
+    </div>
+  </div>
+</aside>
+
+<!-- ── MAIN ──────────────────────────────────────────── -->
+<main class="main">
+
+  <!-- topbar -->
+  <div class="topbar">
+    <div class="page-title">Сегодня — <span style="color:var(--text2);font-weight:400" id="today-label"></span></div>
+    <div class="topbar-actions">
+      <div class="search-box">
+        <i class="ti ti-search"></i>
+        <input type="text" placeholder="Найти задачу…">
+      </div>
+      <span class="clock-chip" id="clock">--:--</span>
+      <button class="btn btn-primary"><i class="ti ti-plus"></i> Добавить</button>
+      <button class="btn"><i class="ti ti-dots-vertical"></i></button>
+    </div>
+  </div>
+
+  <div class="content">
+
+    <!-- KPI -->
+    <div class="kpi-row">
+      <div class="kpi blue">
+        <div class="kpi-label">Задач сегодня</div>
+        <div class="kpi-val blue">7</div>
+        <div class="kpi-sub"><span class="kpi-trend up">+2</span> к вчерашнему</div>
+      </div>
+      <div class="kpi green">
+        <div class="kpi-label">Выполнено</div>
+        <div class="kpi-val green">3</div>
+        <div class="kpi-sub">43% готово</div>
+      </div>
+      <div class="kpi amber">
+        <div class="kpi-label">В работе</div>
+        <div class="kpi-val amber">2</div>
+        <div class="kpi-sub">текущий блок</div>
+      </div>
+      <div class="kpi red">
+        <div class="kpi-label">Срочных</div>
+        <div class="kpi-val red">2</div>
+        <div class="kpi-sub"><span class="kpi-trend dn">!</span> требуют внимания</div>
+      </div>
+    </div>
+
+    <!-- two-col -->
+    <div class="two-col">
+
+      <!-- timeline card -->
+      <div class="card">
+        <div class="card-head">
+          <div class="card-title"><i class="ti ti-timeline"></i> Расписание дня</div>
+          <div class="card-actions">
+            <button class="link-btn"><i class="ti ti-adjustments"></i> Фильтр</button>
+            <button class="link-btn"><i class="ti ti-plus"></i> Задача</button>
+          </div>
+        </div>
+        <div class="timeline">
+
+          <!-- 09:00 -->
+          <div class="tl-slot">
+            <div class="tl-time hour">09:00</div>
+            <div class="tl-line"><div class="tl-dot"></div></div>
+            <div class="tl-body">
+              <div class="task done">
+                <div class="task-stripe blue"></div>
+                <div class="chk checked"></div>
+                <div class="task-name done">Утренний брифинг с командой</div>
+                <span class="task-chip chip-purple">Встреча</span>
+                <span class="task-time">09:00–09:30</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="tl-slot">
+            <div class="tl-time">09:30</div>
+            <div class="tl-line"></div>
+            <div class="tl-body">
+              <div class="task done">
+                <div class="task-stripe blue"></div>
+                <div class="chk checked"></div>
+                <div class="task-name done">Проверка входящих</div>
+                <span class="task-chip chip-blue">Операционная</span>
+                <span class="task-time">09:30–10:00</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- 10:00 -->
+          <div class="tl-slot">
+            <div class="tl-time hour">10:00</div>
+            <div class="tl-line"><div class="tl-dot"></div></div>
+            <div class="tl-body">
+              <div class="task done">
+                <div class="task-stripe amber"></div>
+                <div class="chk checked"></div>
+                <div class="task-name done">Анализ KPI-отчёта за прошлую неделю</div>
+                <span class="task-chip chip-amber">Отчётность</span>
+                <span class="task-time">10:00–11:00</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- 11:00 – NOW -->
+          <div class="tl-slot now">
+            <div class="tl-time hour">11:00</div>
+            <div class="tl-line"><div class="tl-dot"></div></div>
+            <div class="tl-body">
+              <div class="now-bar">
+                <div class="now-bar-label">▶ сейчас</div>
+                <div class="now-bar-line"></div>
+              </div>
+              <div class="task">
+                <div class="task-stripe red"></div>
+                <div class="chk"></div>
+                <div class="task-name">Звонок с поставщиком</div>
+                <span class="task-chip chip-red">Срочная</span>
+                <span class="task-time">11:00–11:30</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="tl-slot">
+            <div class="tl-time">11:30</div>
+            <div class="tl-line"></div>
+            <div class="tl-body"></div>
+          </div>
+
+          <!-- 12:00 -->
+          <div class="tl-slot">
+            <div class="tl-time hour">12:00</div>
+            <div class="tl-line"><div class="tl-dot"></div></div>
+            <div class="tl-body"></div>
+          </div>
+
+          <div class="tl-slot">
+            <div class="tl-time">12:30</div>
+            <div class="tl-line"></div>
+            <div class="tl-body">
+              <div class="task">
+                <div class="task-stripe green"></div>
+                <div class="chk"></div>
+                <div class="task-name">Обед / пауза</div>
+                <span class="task-chip chip-green">Личное</span>
+                <span class="task-time">12:30–13:00</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- 13:00 -->
+          <div class="tl-slot">
+            <div class="tl-time hour">13:00</div>
+            <div class="tl-line"><div class="tl-dot"></div></div>
+            <div class="tl-body">
+              <div class="task">
+                <div class="task-stripe blue"></div>
+                <div class="chk"></div>
+                <div class="task-name">Согласование бюджета — конференц-зал №2</div>
+                <span class="task-chip chip-blue">Операционная</span>
+                <span class="task-time">13:00–14:00</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- 14:00 -->
+          <div class="tl-slot">
+            <div class="tl-time hour">14:00</div>
+            <div class="tl-line"><div class="tl-dot"></div></div>
+            <div class="tl-body"></div>
+          </div>
+
+          <div class="tl-slot">
+            <div class="tl-time">14:30</div>
+            <div class="tl-line"></div>
+            <div class="tl-body">
+              <div class="task">
+                <div class="task-stripe amber"></div>
+                <div class="chk"></div>
+                <div class="task-name">Подготовка презентации для директора</div>
+                <span class="task-chip chip-amber">Отчётность</span>
+                <span class="task-time">14:30–16:30</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- 15:00 -->
+          <div class="tl-slot">
+            <div class="tl-time hour">15:00</div>
+            <div class="tl-line"><div class="tl-dot"></div></div>
+            <div class="tl-body"></div>
+          </div>
+
+          <!-- 16:00 -->
+          <div class="tl-slot">
+            <div class="tl-time hour">16:00</div>
+            <div class="tl-line"><div class="tl-dot"></div></div>
+            <div class="tl-body"></div>
+          </div>
+
+          <!-- urgent below fold -->
+          <div class="tl-slot">
+            <div class="tl-time">16:30</div>
+            <div class="tl-line"></div>
+            <div class="tl-body">
+              <div class="task">
+                <div class="task-stripe red"></div>
+                <div class="chk"></div>
+                <div class="task-name">Ответ на претензию клиента №2847</div>
+                <span class="task-chip chip-red">Срочная</span>
+                <span class="task-time">16:30–17:00</span>
+              </div>
+            </div>
+          </div>
+
+        </div><!-- /timeline -->
+      </div>
+
+      <!-- right col -->
+      <div class="right-col">
+
+        <!-- mini calendar -->
+        <div class="card">
+          <div class="card-head">
+            <div class="card-title"><i class="ti ti-calendar"></i> Июнь 2026</div>
+            <div class="card-actions">
+              <button class="cal-arr"><i class="ti ti-chevron-left"></i></button>
+              <button class="cal-arr"><i class="ti ti-chevron-right"></i></button>
+            </div>
+          </div>
+          <div class="mini-cal" style="padding-top:8px">
+            <div class="cal-grid">
+              <div class="cal-dow">Пн</div><div class="cal-dow">Вт</div><div class="cal-dow">Ср</div>
+              <div class="cal-dow">Чт</div><div class="cal-dow">Пт</div><div class="cal-dow">Сб</div><div class="cal-dow">Вс</div>
+              <div class="cal-day other">26</div><div class="cal-day other">27</div><div class="cal-day other">28</div><div class="cal-day other">29</div><div class="cal-day other">30</div><div class="cal-day other">31</div><div class="cal-day">1</div>
+              <div class="cal-day has-dot">2</div><div class="cal-day has-dot">3</div><div class="cal-day today has-dot">4</div><div class="cal-day">5</div><div class="cal-day has-dot">6</div><div class="cal-day">7</div><div class="cal-day">8</div>
+              <div class="cal-day has-dot">9</div><div class="cal-day">10</div><div class="cal-day">11</div><div class="cal-day has-dot">12</div><div class="cal-day">13</div><div class="cal-day">14</div><div class="cal-day">15</div>
+              <div class="cal-day">16</div><div class="cal-day">17</div><div class="cal-day">18</div><div class="cal-day">19</div><div class="cal-day has-dot">20</div><div class="cal-day">21</div><div class="cal-day">22</div>
+              <div class="cal-day">23</div><div class="cal-day">24</div><div class="cal-day">25</div><div class="cal-day">26</div><div class="cal-day">27</div><div class="cal-day">28</div><div class="cal-day">29</div>
+              <div class="cal-day">30</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- progress -->
+        <div class="card">
+          <div class="card-head">
+            <div class="card-title"><i class="ti ti-chart-pie"></i> Прогресс дня</div>
+          </div>
+          <div class="prog-ring-wrap">
+            <div class="prog-ring">
+              <svg width="64" height="64" viewBox="0 0 64 64">
+                <circle cx="32" cy="32" r="26" fill="none" stroke="#1e2438" stroke-width="8"/>
+                <circle cx="32" cy="32" r="26" fill="none" stroke="#4d8df6" stroke-width="8"
+                  stroke-dasharray="163.4" stroke-dashoffset="93" stroke-linecap="round"/>
+              </svg>
+              <div class="prog-ring-center">43%</div>
+            </div>
+            <div class="prog-ring-info">
+              <div class="prog-ring-label">3 из 7 задач выполнено</div>
+              <div class="mini-bars">
+                <div class="mini-bar-row">
+                  <div class="mini-bar-name" style="color:#4d8df6">Операционные</div>
+                  <div class="mini-bar-track"><div class="mini-bar-fill" style="width:50%;background:#4d8df6"></div></div>
+                  <div class="mini-bar-val">2/4</div>
+                </div>
+                <div class="mini-bar-row">
+                  <div class="mini-bar-name" style="color:#9580ff">Встречи</div>
+                  <div class="mini-bar-track"><div class="mini-bar-fill" style="width:100%;background:#9580ff"></div></div>
+                  <div class="mini-bar-val">1/1</div>
+                </div>
+                <div class="mini-bar-row">
+                  <div class="mini-bar-name" style="color:#f0a030">Отчёты</div>
+                  <div class="mini-bar-track"><div class="mini-bar-fill" style="width:0%;background:#f0a030"></div></div>
+                  <div class="mini-bar-val">0/2</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- upcoming -->
+        <div class="card">
+          <div class="card-head">
+            <div class="card-title"><i class="ti ti-bell"></i> Ближайшие</div>
+            <button class="link-btn">Все</button>
+          </div>
+          <div class="upcoming-list">
+            <div class="upcoming-item">
+              <div class="upcoming-dot" style="background:var(--red)"></div>
+              <div class="upcoming-text">
+                <div class="upcoming-name">Звонок с поставщиком</div>
+                <div class="upcoming-meta">Контракт №45-2025 · Срочная</div>
+              </div>
+              <div class="upcoming-time">11:00</div>
+            </div>
+            <div class="upcoming-item">
+              <div class="upcoming-dot" style="background:var(--blue)"></div>
+              <div class="upcoming-text">
+                <div class="upcoming-name">Согласование бюджета</div>
+                <div class="upcoming-meta">Конференц-зал №2</div>
+              </div>
+              <div class="upcoming-time">13:00</div>
+            </div>
+            <div class="upcoming-item">
+              <div class="upcoming-dot" style="background:var(--amber)"></div>
+              <div class="upcoming-text">
+                <div class="upcoming-name">Презентация директору</div>
+                <div class="upcoming-meta">Отчётность · 2 ч</div>
+              </div>
+              <div class="upcoming-time">14:30</div>
+            </div>
+            <div class="upcoming-item">
+              <div class="upcoming-dot" style="background:var(--red)"></div>
+              <div class="upcoming-text">
+                <div class="upcoming-name">Претензия клиента №2847</div>
+                <div class="upcoming-meta">Срочная</div>
+              </div>
+              <div class="upcoming-time">16:30</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- tags -->
+        <div class="card">
+          <div class="card-head">
+            <div class="card-title"><i class="ti ti-tags"></i> Теги</div>
+          </div>
+          <div class="tag-row">
+            <div class="tag" style="background:#0a1a35;color:#4d8df6;border-color:#1a3566">Склад А</div>
+            <div class="tag" style="background:#051518;color:#22d3ee;border-color:#0e3540">Контракты</div>
+            <div class="tag" style="background:#070f1a;color:#6aa0f0;border-color:#0f2040">Q2 2026</div>
+            <div class="tag" style="background:#1e1200;color:#f0a030;border-color:#3d2800">KPI</div>
+            <div class="tag" style="background:#130f2a;color:#9580ff;border-color:#2a2050">Команда</div>
+            <div class="tag" style="background:#200d0d;color:#e5484d;border-color:#450e0e">Дедлайн</div>
+          </div>
+        </div>
+
+      </div><!-- /right-col -->
+    </div><!-- /two-col -->
+  </div><!-- /content -->
+</main>
+</div>
+
+<script>
+const DAYS=['вс','пн','вт','ср','чт','пт','сб'];
+const MONTHS=['января','февраля','марта','апреля','мая','июня','июля','августа','сентября','октября','ноября','декабря'];
+function p2(n){return String(n).padStart(2,'0')}
+function tick(){
+  const d=new Date();
+  document.getElementById('clock').textContent=`${p2(d.getHours())}:${p2(d.getMinutes())}`;
+  document.getElementById('today-label').textContent=
+    `${DAYS[d.getDay()]}, ${d.getDate()} ${MONTHS[d.getMonth()]} ${d.getFullYear()}`;
+}
+tick();setInterval(tick,10000);
+
+// checkbox toggle demo
+document.querySelectorAll('.chk').forEach(c=>{
+  c.addEventListener('click',()=>c.classList.toggle('checked'));
+});
+// cal day select demo
+document.querySelectorAll('.cal-day:not(.other)').forEach(d=>{
+  d.addEventListener('click',()=>{
+    document.querySelectorAll('.cal-day').forEach(x=>x.classList.remove('sel'));
+    if(!d.classList.contains('today'))d.classList.add('sel');
+  });
+});
+</script>
+</body>
+</html>

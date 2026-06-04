@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Планировщик дня — 30 мин</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@2.44.0/tabler-icons.min.css">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{--bg:#0f1117;--card:#181c27;--card2:#1e2235;--border:#252a3d;--accent:#4f8ef7;--red:#e24b4a;--amber:#ef9f27;--green:#1d9e75;--purple:#7f77dd;--text:#e8eaf0;--muted:#7a8099;--line:#2a2f45;--line-half:#1e2235}
+body{background:var(--bg);color:var(--text);font-family:'Segoe UI',system-ui,sans-serif;font-size:14px;min-height:100vh}
+.app{padding:14px;max-width:800px;margin:0 auto}
+.topbar{display:flex;align-items:center;gap:10px;margin-bottom:12px;flex-wrap:wrap}
+.topbar h1{font-size:18px;font-weight:500;flex:1;min-width:140px}
+.actions{display:flex;gap:6px}
+.btn{background:transparent;border:0.5px solid var(--border);color:var(--text);border-radius:8px;padding:6px 12px;font-size:12px;cursor:pointer;transition:background .15s,border-color .15s;white-space:nowrap;display:inline-flex;align-items:center;gap:5px}
+.btn:hover{background:var(--card2);border-color:var(--accent)}
+.btn-primary{background:var(--accent);border-color:var(--accent);color:#fff}
+.btn-primary:hover{background:#3a7ae8}
+.btn-danger{border-color:var(--red);color:var(--red)}
+.btn-danger:hover{background:#2a1515}
+.nav-days{display:flex;gap:5px;margin-bottom:12px;overflow-x:auto;padding-bottom:2px}
+.day-btn{background:transparent;border:0.5px solid var(--border);color:var(--muted);border-radius:8px;padding:5px 11px;font-size:12px;cursor:pointer;white-space:nowrap;transition:all .15s}
+.day-btn.active{background:var(--accent);border-color:var(--accent);color:#fff;font-weight:500}
+.day-btn.has-tasks{border-color:#378add;color:var(--text)}
+.day-btn:hover:not(.active){background:var(--card2);color:var(--text)}
+.stats-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(90px,1fr));gap:8px;margin-bottom:12px}
+.stat{background:var(--card);border:0.5px solid var(--border);border-radius:8px;padding:9px 12px}
+.stat-l{font-size:11px;color:var(--muted);margin-bottom:2px}
+.stat-v{font-size:20px;font-weight:500}
+.stat-v.blue{color:var(--accent)}.stat-v.green{color:var(--green)}.stat-v.amber{color:var(--amber)}
+.date-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;padding:9px 14px;background:var(--card);border:0.5px solid var(--border);border-radius:10px;flex-wrap:wrap;gap:8px}
+.date-label{font-size:14px;font-weight:500}
+.prog-wrap{display:flex;align-items:center;gap:8px}
+.progress-bar{height:4px;background:var(--border);border-radius:2px;overflow:hidden;width:100px}
+.progress-fill{height:100%;background:var(--green);border-radius:2px;transition:width .4s}
+.prog-txt{font-size:12px;color:var(--muted)}
+.timeline{position:relative;padding-left:58px}
+.slot-row{display:flex;position:relative;min-height:34px}
+.slot-row.hour-start{border-left:1.5px solid var(--line)}
+.slot-row.half-start{border-left:1px dashed var(--line-half)}
+.slot-label{position:absolute;left:-58px;width:50px;text-align:right;padding-right:10px;font-size:11px;font-variant-numeric:tabular-nums;top:-7px}
+.slot-label.hour-lbl{color:var(--text);font-weight:500}
+.slot-label.half-lbl{color:var(--muted)}
+.slot-dot{position:absolute;left:-5px;top:-4px;width:8px;height:8px;border-radius:50%;background:var(--line);border:1.5px solid var(--bg)}
+.slot-row.now-slot .slot-dot{background:var(--accent);border-color:var(--accent)}
+.slot-content{flex:1;padding:2px 0 2px 12px;min-height:34px;cursor:pointer;border-radius:0 6px 6px 0;transition:background .1s}
+.slot-content:hover{background:rgba(79,142,247,.06)}
+.task-block{background:var(--card2);border:0.5px solid var(--border);border-radius:8px;padding:6px 10px;margin-bottom:3px;display:flex;align-items:flex-start;gap:8px;transition:border-color .15s}
+.task-block:hover{border-color:var(--accent)}
+.task-block.done-block{opacity:.45}
+.task-block.cat-ops{border-left:2px solid var(--accent);border-radius:0 8px 8px 0}
+.task-block.cat-meet{border-left:2px solid var(--purple);border-radius:0 8px 8px 0}
+.task-block.cat-report{border-left:2px solid var(--amber);border-radius:0 8px 8px 0}
+.task-block.cat-urgent{border-left:2px solid var(--red);border-radius:0 8px 8px 0}
+.task-check{width:15px;height:15px;min-width:15px;accent-color:var(--accent);margin-top:2px;cursor:pointer}
+.task-text{flex:1;min-width:0}
+.task-title{font-size:13px;font-weight:500;line-height:1.3;word-break:break-word}
+.task-title.done-text{text-decoration:line-through;color:var(--muted)}
+.task-meta{display:flex;gap:5px;margin-top:3px;align-items:center;flex-wrap:wrap}
+.tag{font-size:10px;padding:2px 7px;border-radius:20px;font-weight:500;white-space:nowrap}
+.tag-ops{background:#0d1a2e;color:#4f8ef7;border:0.5px solid #378add}
+.tag-meet{background:#1a1730;color:#afa9ec;border:0.5px solid #7f77dd}
+.tag-report{background:#271d08;color:#ef9f27;border:0.5px solid #ba7517}
+.tag-urgent{background:#2a1515;color:#e24b4a;border:0.5px solid #a32d2d}
+.tag-done{background:#0a1f18;color:#1d9e75;border:0.5px solid #0f6e56}
+.task-dur{font-size:11px;color:var(--muted)}
+.task-note{font-size:11px;color:#4a5070}
+.task-actions{display:flex;gap:3px;opacity:0;transition:opacity .15s;flex-shrink:0}
+.task-block:hover .task-actions{opacity:1}
+.icon-btn{background:transparent;border:none;color:var(--muted);cursor:pointer;padding:2px 4px;border-radius:5px;font-size:13px;display:inline-flex;align-items:center;transition:color .15s,background .15s}
+.icon-btn:hover{color:var(--text);background:var(--border)}
+.now-line{position:absolute;left:-7px;right:0;height:1.5px;background:var(--accent);z-index:10;pointer-events:none}
+.now-dot{position:absolute;left:-11px;top:-4px;width:8px;height:8px;border-radius:50%;background:var(--accent)}
+.empty-hint{font-size:11px;color:#2e3450;pointer-events:none;padding:4px 0}
+.modal-bg{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.78);display:flex;align-items:flex-start;justify-content:center;padding-top:40px;z-index:100;overflow-y:auto}
+.modal{background:var(--card);border:0.5px solid var(--border);border-radius:12px;padding:20px;width:100%;max-width:400px;margin:0 12px 40px}
+.modal h2{font-size:15px;font-weight:500;margin-bottom:13px}
+.fg{margin-bottom:10px}
+.fg label{font-size:12px;color:var(--muted);display:block;margin-bottom:4px}
+.fg input,.fg select{width:100%;background:#0f1117;border:0.5px solid var(--border);border-radius:7px;padding:7px 10px;color:var(--text);font-size:13px;outline:none;transition:border-color .15s;font-family:inherit}
+.fg input:focus,.fg select:focus{border-color:var(--accent)}
+.fg select option{background:var(--card)}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:9px}
+.modal-btns{display:flex;gap:8px;justify-content:flex-end;margin-top:13px}
+@media(max-width:480px){.task-title{font-size:12px}.slot-label{font-size:10px;left:-52px;width:44px}.timeline{padding-left:52px}.date-label{font-size:13px}}
+</style>
+</head>
+<body>
+<div id="app">
+<div class="app">
+  <div class="topbar">
+    <h1><i class="ti ti-clock" style="color:#4f8ef7;margin-right:6px;font-size:17px"></i>Планировщик дня</h1>
+    <div class="actions">
+      <button class="btn btn-primary" onclick="openAdd(null)"><i class="ti ti-plus"></i> Задача</button>
+      <button class="btn btn-danger" onclick="resetAll()"><i class="ti ti-trash"></i> Сброс</button>
+    </div>
+  </div>
+  <div class="nav-days" id="nav-days"></div>
+  <div class="stats-row" id="stats"></div>
+  <div class="date-header">
+    <div class="date-label" id="date-label"></div>
+    <div class="prog-wrap">
+      <span class="prog-txt" id="prog-txt"></span>
+      <div class="progress-bar"><div class="progress-fill" id="prog-fill"></div></div>
+    </div>
+  </div>
+  <div class="timeline" id="timeline"></div>
+</div>
+<div class="modal-bg" id="modal" style="display:none">
+  <div class="modal">
+    <h2 id="modal-title">Новая задача</h2>
+    <div class="fg"><label>Название</label><input id="f-name" type="text" placeholder="Что нужно сделать..."></div>
+    <div class="row2">
+      <div class="fg"><label>Дата</label><input id="f-date" type="date"></div>
+      <div class="fg"><label>Категория</label>
+        <select id="f-cat">
+          <option value="ops">Операционная</option>
+          <option value="meet">Встреча</option>
+          <option value="report">Отчётность</option>
+          <option value="urgent">Срочная</option>
+        </select>
+      </div>
+    </div>
+    <div class="row2">
+      <div class="fg"><label>Начало</label><select id="f-start"></select></div>
+      <div class="fg"><label>Конец</label><select id="f-end"></select></div>
+    </div>
+    <div class="fg"><label>Комментарий</label><input id="f-note" type="text" placeholder="Детали..."></div>
+    <div class="modal-btns">
+      <button class="btn" onclick="closeModal()">Отмена</button>
+      <button class="btn btn-primary" onclick="saveTask()">Сохранить</button>
+    </div>
+  </div>
+</div>
+</div>
+<script>
+const KEY='planner_30m_v1';
+let tasks=[],selDate='',editId=null;
+const DAYS=['Вс','Пн','Вт','Ср','Чт','Пт','Сб'];
+const MONTHS=['января','февраля','марта','апреля','мая','июня','июля','августа','сентября','октября','ноября','декабря'];
+const CAT={ops:{label:'Операционная',tag:'tag-ops'},meet:{label:'Встреча',tag:'tag-meet'},report:{label:'Отчётность',tag:'tag-report'},urgent:{label:'Срочная',tag:'tag-urgent'}};
+function p2(n){return String(n).padStart(2,'0');}
+function todayStr(){const d=new Date();return`${d.getFullYear()}-${p2(d.getMonth()+1)}-${p2(d.getDate())}`;}
+function addDays(s,n){const d=new Date(s+'T00:00:00');d.setDate(d.getDate()+n);return`${d.getFullYear()}-${p2(d.getMonth()+1)}-${p2(d.getDate())}`;}
+function fmtFull(s){const d=new Date(s+'T00:00:00');return`${DAYS[d.getDay()]}, ${d.getDate()} ${MONTHS[d.getMonth()]} ${d.getFullYear()}`;}
+function toMins(t){const[h,m]=t.split(':').map(Number);return h*60+m;}
+function durText(s,e){const d=toMins(e)-toMins(s);if(d<=0)return'';if(d<60)return d+'мин';const h=Math.floor(d/60),m=d%60;return h+'ч'+(m?m+'мин':'');}
+function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+function allSlots(){const s=[];for(let h=8;h<=20;h++){s.push({h,m:0,key:`${p2(h)}:00`});if(h<20)s.push({h,m:30,key:`${p2(h)}:30`});}return s;}
+function slotOptions(){const s=[];for(let h=8;h<=20;h++){s.push(`${p2(h)}:00`);if(h<20)s.push(`${p2(h)}:30`);}s.push('20:00');return s;}
+
+function load(){
+  const raw=localStorage.getItem(KEY);
+  if(raw){const p=JSON.parse(raw);tasks=p.tasks||[];selDate=p.selDate||todayStr();}
+  else{
+    selDate=todayStr();
+    const td=selDate;
+    tasks=[
+      {id:1,name:'Утренний брифинг с командой',date:td,start:'09:00',end:'09:30',cat:'meet',done:false,note:'Обсудить план на день'},
+      {id:2,name:'Проверка входящих и расстановка приоритетов',date:td,start:'09:30',end:'10:00',cat:'ops',done:false,note:''},
+      {id:3,name:'Анализ KPI-отчёта за прошлую неделю',date:td,start:'10:00',end:'11:00',cat:'report',done:false,note:'Сводная таблица'},
+      {id:4,name:'Звонок с поставщиком',date:td,start:'11:00',end:'11:30',cat:'urgent',done:false,note:'Контракт №45-2025'},
+      {id:5,name:'Обед / пауза',date:td,start:'12:30',end:'13:00',cat:'ops',done:false,note:''},
+      {id:6,name:'Согласование бюджета с финотделом',date:td,start:'13:00',end:'14:00',cat:'ops',done:false,note:'Конференц-зал №2'},
+      {id:7,name:'Подготовка презентации для директора',date:td,start:'14:30',end:'16:30',cat:'report',done:false,note:''},
+      {id:8,name:'Ревизия складских остатков — Склад А',date:addDays(td,1),start:'10:00',end:'11:30',cat:'ops',done:false,note:''},
+      {id:9,name:'Встреча с новым подрядчиком',date:addDays(td,1),start:'14:00',end:'14:30',cat:'meet',done:false,note:''},
+      {id:10,name:'Квартальный отчёт',date:addDays(td,-1),start:'09:00',end:'11:00',cat:'report',done:true,note:'Отправлен'},
+    ];
+    save();
+  }
+}
+function save(){localStorage.setItem(KEY,JSON.stringify({tasks,selDate}));}
+function getDates(){const t=todayStr();const all=new Set(tasks.map(x=>x.date));[-2,-1,0,1,2,3].forEach(n=>all.add(addDays(t,n)));return[...all].sort();}
+
+function renderNav(){
+  const t=todayStr();
+  document.getElementById('nav-days').innerHTML=getDates().map(d=>{
+    const dt=new Date(d+'T00:00:00');
+    const lbl=d===t?'Сегодня':d===addDays(t,-1)?'Вчера':d===addDays(t,1)?'Завтра':`${DAYS[dt.getDay()]} ${dt.getDate()}`;
+    const has=tasks.some(x=>x.date===d);
+    return`<button class="day-btn${d===selDate?' active':''}${has&&d!==selDate?' has-tasks':''}" onclick="selDay('${d}')">${lbl}</button>`;
+  }).join('');
+}
+function selDay(d){selDate=d;save();render();}
+
+function renderStats(){
+  const dt=tasks.filter(x=>x.date===selDate);
+  const done=dt.filter(x=>x.done).length,total=dt.length;
+  const urg=dt.filter(x=>x.cat==='urgent'&&!x.done).length;
+  const pct=total?Math.round(done/total*100):0;
+  document.getElementById('stats').innerHTML=`<div class="stat"><div class="stat-l">Задач</div><div class="stat-v blue">${total}</div></div><div class="stat"><div class="stat-l">Выполнено</div><div class="stat-v green">${done}</div></div><div class="stat"><div class="stat-l">Срочных</div><div class="stat-v amber">${urg}</div></div><div class="stat"><div class="stat-l">Прогресс</div><div class="stat-v">${pct}%</div></div>`;
+  document.getElementById('prog-fill').style.width=pct+'%';
+  document.getElementById('prog-txt').textContent=`${done}/${total}`;
+}
+function renderDateHeader(){
+  const t=todayStr();
+  const pre=selDate===t?'Сегодня — ':selDate===addDays(t,1)?'Завтра — ':selDate===addDays(t,-1)?'Вчера — ':'';
+  document.getElementById('date-label').textContent=pre+fmtFull(selDate);
+}
+function renderTimeline(){
+  const isToday=selDate===todayStr();
+  const now=new Date();
+  const nowMins=now.getHours()*60+now.getMinutes();
+  const dayTasks=tasks.filter(x=>x.date===selDate);
+  const slots=allSlots();
+  let html='';
+  slots.forEach(({h,m,key})=>{
+    const isHour=m===0;
+    const slotMins=h*60+m;
+    const nextMins=slotMins+30;
+    const isNow=isToday&&nowMins>=slotMins&&nowMins<nextMins;
+    const st=dayTasks.filter(t=>{const sm=toMins(t.start);return sm>=slotMins&&sm<nextMins;}).sort((a,b)=>a.start.localeCompare(b.start));
+    html+=`<div class="slot-row${isHour?' hour-start':' half-start'}${isNow?' now-slot':''}">`;
+    html+=`<span class="slot-label ${isHour?'hour-lbl':'half-lbl'}">${key}</span>`;
+    if(isHour)html+=`<div class="slot-dot"></div>`;
+    if(isNow){const pct=Math.round(((nowMins-slotMins)/30)*100);html+=`<div class="now-line" style="top:${pct}%"><div class="now-dot"></div></div>`;}
+    html+=`<div class="slot-content" onclick="openAdd('${key}')" title="+ добавить в ${key}">`;
+    if(!st.length)html+=`<div class="empty-hint">+ ${key}</div>`;
+    st.forEach(t=>{
+      const dur=durText(t.start,t.end);
+      html+=`<div class="task-block cat-${t.cat}${t.done?' done-block':''}"><input type="checkbox" class="task-check" ${t.done?'checked':''} onchange="toggle(${t.id})" onclick="event.stopPropagation()"><div class="task-text"><div class="task-title${t.done?' done-text':''}">${esc(t.name)}</div><div class="task-meta"><span class="tag ${CAT[t.cat].tag}">${CAT[t.cat].label}</span><span class="task-dur"><i class="ti ti-clock" style="font-size:10px;margin-right:2px"></i>${t.start}–${t.end}${dur?' ('+dur+')':''}</span>${t.done?'<span class="tag tag-done">Выполнена</span>':''}${t.note?`<span class="task-note">${esc(t.note)}</span>`:''}</div></div><div class="task-actions"><button class="icon-btn" onclick="openEdit(${t.id});event.stopPropagation()"><i class="ti ti-edit"></i></button><button class="icon-btn" onclick="del(${t.id});event.stopPropagation()"><i class="ti ti-trash"></i></button></div></div>`;
+    });
+    html+=`</div></div>`;
+  });
+  document.getElementById('timeline').innerHTML=html;
+  if(isToday){const el=document.querySelector('.now-slot');if(el)setTimeout(()=>el.scrollIntoView({behavior:'smooth',block:'center'}),150);}
+}
+function populateTimes(sv,ev){
+  const opts=slotOptions();
+  ['f-start','f-end'].forEach((id,i)=>{
+    const val=i===0?sv:ev;
+    document.getElementById(id).innerHTML=opts.map(o=>`<option value="${o}"${o===val?' selected':''}>${o}</option>`).join('');
+  });
+}
+function openAdd(slotKey){
+  editId=null;
+  document.getElementById('modal-title').textContent='Новая задача';
+  document.getElementById('f-name').value='';
+  document.getElementById('f-date').value=selDate;
+  document.getElementById('f-cat').value='ops';
+  document.getElementById('f-note').value='';
+  const s=slotKey||'09:00';
+  const[sh,sm]=s.split(':').map(Number);
+  const em=(sh*60+sm)+30;
+  populateTimes(s,`${p2(Math.floor(em/60))}:${p2(em%60)}`);
+  document.getElementById('modal').style.display='flex';
+}
+function openEdit(id){
+  editId=id;const t=tasks.find(x=>x.id===id);
+  document.getElementById('modal-title').textContent='Редактировать задачу';
+  document.getElementById('f-name').value=t.name;
+  document.getElementById('f-date').value=t.date;
+  document.getElementById('f-cat').value=t.cat;
+  document.getElementById('f-note').value=t.note||'';
+  populateTimes(t.start,t.end);
+  document.getElementById('modal').style.display='flex';
+}
+function closeModal(){document.getElementById('modal').style.display='none';}
+function saveTask(){
+  const name=document.getElementById('f-name').value.trim();
+  if(!name){alert('Введите название');return;}
+  const obj={name,date:document.getElementById('f-date').value||selDate,cat:document.getElementById('f-cat').value,start:document.getElementById('f-start').value,end:document.getElementById('f-end').value,note:document.getElementById('f-note').value.trim(),done:false};
+  if(editId)Object.assign(tasks.find(x=>x.id===editId),obj);
+  else tasks.push({id:Date.now(),...obj});
+  save();closeModal();render();
+}
+function toggle(id){const t=tasks.find(x=>x.id===id);if(t){t.done=!t.done;save();render();}}
+function del(id){if(confirm('Удалить?')){tasks=tasks.filter(x=>x.id!==id);save();render();}}
+function resetAll(){if(confirm('Сбросить все данные?')){localStorage.removeItem(KEY);load();render();}}
+document.getElementById('modal').addEventListener('click',function(e){if(e.target===this)closeModal();});
+function render(){renderNav();renderStats();renderDateHeader();renderTimeline();}
+load();render();
+setInterval(()=>{if(selDate===todayStr())renderTimeline();},30000);
+</script>
+</body>
+</html>
